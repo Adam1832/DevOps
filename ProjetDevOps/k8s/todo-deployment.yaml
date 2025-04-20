@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: todo-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: todo
+  template:
+    metadata:
+      labels:
+        app: todo
+    spec:
+      containers:
+      - name: todo
+        image: todo-service:1.0
+        imagePullPolicy: Never  # Utiliser l'image locale
+        ports:
+        - containerPort: 3000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: todo-service
+spec:
+  selector:
+    app: todo
+  type: LoadBalancer  # Changer NodePort en LoadBalancer (si ton environnement le permet)
+  ports:
+    - port: 80
+      targetPort: 3000

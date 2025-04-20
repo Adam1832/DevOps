@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Todo App</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .bg-image {
+      background-image: url('/frontend/image/a-book-3043275_1280.jpg');
+      background-position: center;
+      background-size: cover;
+      filter: blur(8px);
+      height: 100vh;
+      position: absolute;
+      width: 100%;
+      top: 0;
+      left: 0;
+      z-index: -1;
+    }
+  </style>
+</head>
+
+<body class="font-sans bg-gray-100">
+  <div class="bg-image"></div>
+
+  <div class="flex justify-center items-center min-h-screen">
+    <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-lg">
+
+      <h1 class="text-3xl font-semibold text-center text-gray-800 mb-4">Ma liste de tâches</h1>
+
+      <form id="task-form" class="mb-6">
+        <div class="mb-4">
+          <input type="text" id="task-title" placeholder="Nouvelle tâche" required
+            class="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        </div>
+        <button type="submit"
+          class="w-full py-3 bg-blue-500 text-white font-semibold rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500">
+          Ajouter
+        </button>
+      </form>
+
+      <ul id="task-list" class="space-y-3">
+      </ul>
+
+    </div>
+  </div>
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const taskList = document.getElementById("task-list");
+      const taskForm = document.getElementById("task-form");
+      const taskTitle = document.getElementById("task-title");
+
+      // Récupération des tâches
+      function fetchTasks() {
+        fetch("/tasks")
+          .then(response => response.json())
+          .then(tasks => {
+            taskList.innerHTML = '';
+            tasks.forEach(task => {
+              const taskItem = document.createElement("li");
+              taskItem.classList.add("task-item");
+              if (task.done) {
+                taskItem.classList.add("done");
+              }
+              taskItem.innerHTML = `
+                <span>${task.title}</span>
+                ${!task.done ? `<button class="mark-done" data-id="${task.id}">✔</button>` : ''}
+              `;
+              taskList.appendChild(taskItem);
+            });
+
+            // Marquer comme terminé
+            document.querySelectorAll(".mark-done").forEach(button => {
+              button.addEventListener("click", (e) => {
+                const taskId = e.target.dataset.id;
+                fetch(`/tasks/${taskId}`, {
+                  method: 'PUT'
+                }).then(() => fetchTasks());
+              });
+            });
+          })
+          .catch(error => {
+            console.error("Erreur lors de la récupération des tâches :", error);
+          });
+      }
+
+      // Ajout d'une tâche
+      taskForm.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const title = taskTitle.value.trim();
+        if (title) {
+          fetch("/tasks", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ title })
+          })
+          .then(() => {
+            taskTitle.value = "";
+            fetchTasks();
+          })
+          .catch(error => {
+            console.error("Erreur lors de l'ajout :", error);
+          });
+        }
+      });
+
+      fetchTasks();
+    });
+  </script>
+</body>
+</html>
